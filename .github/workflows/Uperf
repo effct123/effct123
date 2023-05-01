@@ -1,0 +1,121 @@
+import heapq
+
+class Resource:
+
+    def __init__(self, id, power, capacity):
+
+        self.id = id
+
+        self.power = power
+
+        self.capacity = capacity
+
+        self.jobs = []
+
+        self.load = 0
+
+    def add_job(self, job):
+
+        self.jobs.append(job)
+
+        self.load += job.load
+
+    def remove_job(self, job):
+
+        self.jobs.remove(job)
+
+        self.load -= job.load
+
+    @property
+
+    def available(self):
+
+        return self.load < self.capacity
+
+    @property
+
+    def efficiency(self):
+
+        return self.power / self.load if self.load > 0 else float('inf')
+
+class Job:
+
+    def __init__(self, id, load):
+
+        self.id = id
+
+        self.load = load
+
+        self.resource = None
+
+class Scheduler:
+
+    def __init__(self, resources):
+
+        self.resources = {}
+
+        self.jobs = []
+
+        self.power = 0
+
+        for r in resources:
+
+            self.resources[r.id] = Resource(r.id, r.power, r.capacity)
+
+    def add_job(self, job):
+
+        self.jobs.append(job)
+
+    def schedule(self):
+
+        # 按负载从小到大排序
+
+        self.jobs = sorted(self.jobs, key=lambda j: j.load)
+
+        # 按效率从高到低排序
+
+        resources = sorted(self.resources.values(), key=lambda r: r.efficiency, reverse=True)
+
+        for job in self.jobs:
+
+            # 选择可用资源
+
+            available_resources = [r for r in resources if r.available]
+
+            if not available_resources:
+
+                break
+
+            # 选择资源中效率最高的一个
+
+            r = available_resources[0]
+
+            # 分配任务给资源
+
+            r.add_job(job)
+
+            job.resource = r
+
+            self.power += r.power
+
+        # 运行任务
+
+        for r in self.resources.values():
+
+            if r.jobs:
+
+                # 计算资源运行时间
+
+                time = max([j.load for j in r.jobs]) / r.power
+
+                # 更新能耗
+
+                self.power -= r.power * time
+
+                # 移除任务
+
+                for j in r.jobs:
+
+                    j.resource = None
+
+                r.jobs = []
